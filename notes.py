@@ -1,64 +1,77 @@
 import datetime
+from sqlalchemy import String, Integer, Boolean, Column, ARRAY, ForeignKey
+from sqlalchemy.orm import relationship
+import sqlalchemy.ext.declarative as dec
+import sqlalchemy.orm as orm
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import Session
+
+SQLAlchemyBase = dec.declarative_base()
 
 
-class User(object):
-    id = int
-    name = str
-    type = list
-    login = str
-    password = str
-    data_of_registration = datetime.date()
-    all_contests = list
+class User(SQLAlchemyBase):
+    id: int
+    name: str
+    type: list
+    login: str
+    password: str
+    all_contests: list
 
 
 class Participant(User):
-    id_user = int
-    top = int
-    teams = list
-    contests = list
-
-
-class Organizer(User):
-    id_user = int
-    organizer_of_contests = list
-
-
-class Mentor(User):
-    id_user = int
-    comand_id = int
+    id_user: int
+    top: int
+    teams: list
+    contests: list
 
 
 class Admin(User):
-    id_user = int
+    id_user: int
 
 
-class Contest(object):
-    id = int
+class Contest(SQLAlchemyBase):
+    __tablename__ = 'contest'
 
-    def __init__(self, proof=bool, id=int):
-        self.proof = proof
-        if self.proof:
-            self.proof_of_whom = id
-        else:
-            self.by_user = id
-
-    stages = list
-    teams = list
-    script_autoregistration = list
-    applications = list
+    id = Column('id', UUID, server_default=sqlalchemy.text('gen_random_uuid()'), primary_key=True)
+    proof = Column('proof', Boolean, ForeignKey("user.id"))
+    teams = Column('teams', ARRAY(item_type=String), ForeignKey("team.id"), nullable=True)
+    applications = Column('applications', ARRAY(item_type=String), ForeignKey("team.id"), nullable=True)
 
 
-class Team(object):
-    id = int
-    leader_id = int
-    users_id = list
-    mentor_id = int
-    project = str
-    applications = list
-    tickets = list
+class Team(SQLAlchemyBase):
+    __tablename__ = 'team'
+
+    id = Column('id', UUID, server_default=sqlalchemy.text('gen_random_uuid()'), primary_key=True)
+    leader_id = Column('leader_id', UUID, ForeignKey("user.id"), server_default=sqlalchemy.text('gen_random_uuid()'),
+                       primary_key=True)
+    users_id = Column('users_id', ARRAY(item_type=Integer), ForeignKey("user.id"), nullable=True)
+    project_id = Column('project_id', UUID, ForeignKey("project.id"),
+                        server_default=sqlalchemy.text('gen_random_uuid()'),
+                        primary_key=True)
+    applications = Column('applications', ARRAY(item_type=String), ForeignKey("user.id"), nullable=True)
+    tickets = Column('tickets', ARRAY(item_type=Integer), ForeignKey("ticket.id"), nullable=True)
 
 
-class Ticket(object):
-    id = int
-    team_id = int
-    contest = int
+class Ticket(SQLAlchemyBase):
+    __tablename__ = 'ticket'
+
+    id = Column('id', UUID, server_default=sqlalchemy.text('gen_random_uuid()'), primary_key=True)
+    team_id = Column('team_id', UUID, ForeignKey("team.id"), server_default=sqlalchemy.text('gen_random_uuid()'),
+                     primary_key=True)
+    contest = Column('contest_id', UUID, ForeignKey("contest.id"), server_default=sqlalchemy.text('gen_random_uuid()'),
+                     primary_key=True)
+
+
+class Project(SQLAlchemyBase):
+    __tablename__ = 'project'
+
+    id = Column('id', UUID, server_default=sqlalchemy.text('gen_random_uuid()'), primary_key=True)
+    team_id = Column('team_id', UUID, ForeignKey("team.id"), server_default=sqlalchemy.text('gen_random_uuid()'),
+                     primary_key=True)
+    contest = Column('contest_id', UUID, ForeignKey("contest.id"), server_default=sqlalchemy.text('gen_random_uuid()'),
+                     primary_key=True)
+    ticket_id = Column('ticket_id', UUID, ForeignKey("ticket.id"), server_default=sqlalchemy.text('gen_random_uuid()'),
+                       primary_key=True)
+    card_for_project = Column('card_for_project', String, primary_key=True)
+
