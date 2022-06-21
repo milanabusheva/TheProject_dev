@@ -12,11 +12,20 @@ from sqlalchemy.orm import Session
 SQLAlchemyBase = dec.declarative_base()
 
 
-class Users:
-
+class Users(SQLAlchemyBase):
     __tablename__ = 'users'
     id = Column('id', Integer, primary_key=True)
     phone = Column('phone', Integer)
     project_name = Column('project_name', String(200), nullable=False)
     project_desc = Column('project_desc', Text())
     taglist = Column('taglist', ARRAY(item_type=String(200)), nullable=True)
+
+
+class Teams(SQLAlchemyBase):
+    __tablename__ = 'teams'
+    id = Column('id', Integer, primary_key=True)
+    project_name = Column('project_name', String(200), nullable=False)
+    project_desc = Column('project_desc', Text())
+    team = relationship('Users')
+
+    
